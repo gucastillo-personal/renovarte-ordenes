@@ -1,0 +1,18 @@
+node_modules/
+dist/
+coverage/
+*.log
+.env
+.env.*
+!.env.example
+
+# Terraform (la infra vive en este repo, ver plan.md ## Infra)
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/terraform.tfvars
+terraform/build/
+terraform/crash.log
+
+# OS
+.DS_Store
