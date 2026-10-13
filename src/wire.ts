@@ -45,7 +45,7 @@ export interface CrearOrdenRequest {
   lineas: Array<{
     /** `id` de products.json. */
     producto_id: string;
-    /** Entero 1..20 (ux.md #D). */
+    /** Entero 1..10 (ux.md #D). */
     cantidad: number;
     /** Entero ARS: el `precio_venta` que el visitante tenía en pantalla. */
     precio_visto: number;
