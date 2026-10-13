@@ -20,7 +20,7 @@ export const NOMBRE_MAX = 80;
 export const TELEFONO_DIGITOS_MIN = 8;
 export const TELEFONO_DIGITOS_MAX = 15;
 export const CANTIDAD_MIN = 1;
-export const CANTIDAD_MAX = 20;
+export const CANTIDAD_MAX = 10;
 
 export type ErrorOrden = { campo: CampoOrden | null; codigo: CodigoError };
 

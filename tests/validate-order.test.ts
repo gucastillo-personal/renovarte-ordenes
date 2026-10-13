@@ -248,9 +248,9 @@ describe("lineas", () => {
 
   it.each([
     ["1", 1, true],
-    ["20", 20, true],
+    ["10", 10, true],
     ["0", 0, false],
-    ["21", 21, false],
+    ["11", 11, false],
     ["-1", -1, false],
     ["1,5", 1.5, false],
     ["NaN", NaN, false],
@@ -331,7 +331,7 @@ describe("tamano y JSON (validateRawBody)", () => {
   it("100 lineas caben bajo el tope", () => {
     const lineas = Array.from({ length: 100 }, (_, i) => ({
       producto_id: `P-${String(i).padStart(7, "0")}`,
-      cantidad: 20,
+      cantidad: 10,
       precio_visto: 999999,
     }));
     const raw = JSON.stringify(base({ lineas }));
