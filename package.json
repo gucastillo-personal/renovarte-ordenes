@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check:leak": "node scripts/check-leak.mjs",
+    "dev:local": "tsx dev/local-server.ts",
+    "check:leak": "tsx scripts/check-leak.ts",
     "gate": "pnpm lint && pnpm typecheck && pnpm test && pnpm check:leak"
   },
   "dependencies": {

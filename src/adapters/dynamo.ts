@@ -15,6 +15,7 @@ import {
   UpdateCommand,
   type DynamoDBDocumentClient,
 } from "@aws-sdk/lib-dynamodb";
+import type { ControlEscritor } from "../handlers/budget-guard.js";
 import type { ControlStore, ItemControl, Motivo } from "../lib/control.js";
 import { CONTROL_PK } from "../lib/control.js";
 import type { IdempotenciaStore, ItemIdem } from "../lib/idempotency.js";
@@ -37,6 +38,27 @@ const nombreError = (e: unknown): string | undefined =>
   typeof e === "object" && e !== null ? (e as { name?: string }).name : undefined;
 
 const condicionFallida = (e: unknown): boolean => nombreError(e) === "ConditionalCheckFailedException";
+
+/** Escritor de `CONTROL` para `budget-guard` (B16): apaga con motivo y habilita (reset). */
+export function crearControlEscritorDynamo(
+  doc: DocClientLike,
+  tabla: string,
+  ahoraMs: () => number = Date.now,
+): ControlEscritor {
+  const item = (extra: Record<string, unknown>) => ({
+    pk: CONTROL_PK,
+    ...extra,
+    actualizado_en: new Date(ahoraMs()).toISOString(),
+  });
+  return {
+    async apagar(motivo) {
+      await doc.send(new PutCommand({ TableName: tabla, Item: item({ habilitado: false, motivo }) }));
+    },
+    async habilitar() {
+      await doc.send(new PutCommand({ TableName: tabla, Item: item({ habilitado: true }) }));
+    },
+  };
+}
 
 export function crearStoresDynamo(doc: DocClientLike, tabla: string, ahoraMs: () => number = Date.now): StoresDynamo {
   const exp = (c: Contador) => ({ ":exp": c.expiraEn });

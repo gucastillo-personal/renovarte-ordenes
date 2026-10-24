@@ -22,6 +22,47 @@ pnpm install
 pnpm gate   # lint + typecheck + test + check:leak
 ```
 
+## Servidor local (sin AWS)
+
+`pnpm dev:local` levanta el **mismo handler HTTP** que la Lambda, con
+puertos fake en memoria (DynamoDB, SES, Discord, SSM y catálogo fixture
+ficticio). No toca AWS ni la red salvo el propio servidor en `127.0.0.1`.
+El mail y el mensaje de Discord **no se envían**: se imprimen en la
+consola, junto con los logs (que siguen la allowlist). Como se imprime lo
+que se escribe en el formulario, **usar solo datos ficticios**.
+
+```
+pnpm dev:local [--port=8787] [--fail=none|mail|discord|both]
+               [--fail-mode=fallido|incierto] [--control=on|tope|flood]
+```
+
+| Flag | Env | Default | Efecto |
+|---|---|---|---|
+| `--port` | `PORT` | `8787` | Puerto en `127.0.0.1` |
+| `--fail` | `FAIL_CHANNELS` | `none` | Fuerza la falla de un canal o de los dos (probar AC-20/AC-25 desde el frontend) |
+| `--fail-mode` | `FAIL_MODE` | `fallido` | `fallido` (4xx, reintentable) o `incierto` (5xx, no se reintenta) |
+| `--control` | `CONTROL_INICIAL` | `on` | `on` habilitado; `tope` o `flood` arrancan con `CONTROL` apagado con ese motivo |
+| (env) | `ALLOWED_ORIGINS` | `http://localhost:3000` | Orígenes permitidos (CSV) |
+
+Contrato (`src/wire.ts`, RFC 3):
+
+- `GET /v1/estado` devuelve `disponible` con un `form_token`. El token
+  vale recién a los 3 s de emitido: esperar antes de enviar el formulario.
+- `POST /v1/ordenes` con el cuerpo de `CrearOrdenRequest`. Catálogo
+  fixture: `demo-1` ($ 12.500), `demo-2` ($ 8.900), `demo-3` ($ 3.200).
+- El estado (idempotencia, rate limit, ledger) vive en memoria y se pierde
+  al reiniciar. El handler no emite CORS (lo hace la Function URL en
+  producción); el servidor local lo emula, preflight incluido.
+
+## Auditoría de fugas
+
+`pnpm check:leak` (parte de `pnpm gate`) revisa los archivos versionables:
+secretos e identificadores (webhooks de Discord, ARNs con cuenta, IDs,
+claves), `*.tfvars`/`*.tfstate`/`.env`, tokens de costo/margen/precio LACA
+y emails literales en `src/`, y las salidas renderizadas de ejemplo (mail,
+Discord con adjunto y JSON del contrato). Nunca imprime el valor hallado.
+Código en `src/leak-audit.ts`.
+
 ## Pricing y límites vigentes
 
 Verificado el **2026-10-07** contra las páginas oficiales (spec 0017, B1).
