@@ -17,6 +17,6 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": false
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts"],
+  "include": ["src/**/*.ts", "tests/**/*.ts", "scripts/**/*.ts", "dev/**/*.ts"],
   "exclude": ["dist", "node_modules"]
 }
