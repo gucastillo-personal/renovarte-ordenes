@@ -19,8 +19,7 @@ resource "aws_cloudwatch_metric_alarm" "flood" {
     FunctionName = local.orders_http_name
   }
 
-  # PENDIENTE I18: agregar el topic de alertas operativas
-  # (aws_sns_topic.alertas_operativas.arn) para que el CTO/CEO reciba un
-  # email cuando el flood apaga el servicio.
-  alarm_actions = [aws_sns_topic.kill_switch.arn]
+  # kill-switch (budget-guard) + email operativo al CTO/CEO. Sin
+  # ok_actions: la reactivación es manual.
+  alarm_actions = [aws_sns_topic.kill_switch.arn, aws_sns_topic.alertas_operativas.arn]
 }

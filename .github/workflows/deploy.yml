@@ -1,0 +1,60 @@
+# Deploy del CÓDIGO de las Lambdas (I-D10). La infra (Terraform) se aplica
+# siempre a mano, con aprobación humana: este workflow NO corre terraform.
+# Disparo solo manual (workflow_dispatch exige permiso de escritura en el
+# repo) y solo desde main. Asume por OIDC el rol de deploy, cuyo trust
+# exige este repo y refs/heads/main; el rol solo puede actualizar el código
+# de las funciones (no IAM, env vars, concurrency ni SSM).
+# El ARN del rol viene de la variable del repo AWS_DEPLOY_ROLE_ARN (no es
+# un secreto; no se escribe en este archivo).
+name: Deploy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  # Nombres físicos = "${project_name}-<función>" de terraform/locals.tf.
+  FUNCTIONS: renovarte-ordenes-orders-http renovarte-ordenes-budget-guard
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.3.4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm gate
+      - run: pnpm build
+      # Mismo contenido que archive_file de Terraform (dist/ en la raíz del zip).
+      - name: Empaquetar dist/
+        run: (cd dist && zip -qr ../ordenes.zip .)
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: update-function-code y esperar
+        run: |
+          for fn in $FUNCTIONS; do
+            aws lambda update-function-code --function-name "$fn" \
+              --zip-file fileb://ordenes.zip --query LastUpdateStatus --output text
+            aws lambda wait function-updated --function-name "$fn"
+            echo "desplegada: $fn"
+          done

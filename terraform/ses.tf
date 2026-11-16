@@ -37,7 +37,7 @@ resource "aws_sesv2_email_identity_mail_from_attributes" "domain" {
   count                  = local.use_sender_domain ? 1 : 0
   email_identity         = aws_sesv2_email_identity.domain[0].email_identity
   mail_from_domain       = "mail.${var.sender_domain}"
-  behavior_on_mx_failure = "USE_DEFAULT_MAIL_FROM"
+  behavior_on_mx_failure = "USE_DEFAULT_VALUE"
 }
 
 locals {

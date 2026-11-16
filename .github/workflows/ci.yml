@@ -1,6 +1,8 @@
-# CI de solo lectura: corre `pnpm gate` (lint + typecheck + test +
-# check:leak). Nunca despliega ni toca infraestructura real. El job de
-# Terraform se agrega con la infra (plan.md ## Infra), no en B2.
+# CI de solo lectura (I-D11): `pnpm gate` + build del código Node, y
+# validación de la infra Terraform. Nunca despliega, nunca corre
+# `terraform apply`/`plan` ni usa secretos ni OIDC: un PR de un fork no
+# puede obtener nada. NUNCA usar `pull_request_target` en este repo
+# (es público: daría permisos de escritura a PRs de forks).
 name: CI
 
 on:
@@ -8,11 +10,21 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   gate:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: pnpm/action-setup@v4
         with:
           version: 12.3.4
@@ -22,3 +34,47 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
       - run: pnpm gate
+      - run: pnpm build
+
+  # Job siempre presente (para poder exigirlo como check requerido): si el
+  # PR no toca terraform/**, los pasos de Terraform se saltean y el job
+  # termina en verde.
+  terraform:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Detectar cambios en terraform/**
+        id: cambios
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            if git diff --name-only "origin/${BASE_REF}...HEAD" | grep -q '^terraform/'; then
+              echo "tocado=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "tocado=false" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo "tocado=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.cambios.outputs.tocado == 'true'
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~> 1.11"
+      - name: terraform fmt
+        if: steps.cambios.outputs.tocado == 'true'
+        working-directory: terraform
+        run: terraform fmt -check -recursive
+      - name: terraform init (sin backend ni credenciales)
+        if: steps.cambios.outputs.tocado == 'true'
+        working-directory: terraform
+        run: terraform init -backend=false -input=false
+      - name: terraform validate
+        if: steps.cambios.outputs.tocado == 'true'
+        working-directory: terraform
+        run: terraform validate
