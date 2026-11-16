@@ -54,6 +54,44 @@ Contrato (`src/wire.ts`, RFC 3):
   al reiniciar. El handler no emite CORS (lo hace la Function URL en
   producción); el servidor local lo emula, preflight incluido.
 
+## Terraform
+
+Infra en `terraform/` (AWS, estado **local**, sin backend remoto).
+Prerrequisitos: Terraform >= 1.11 (por `value_wo` de SSM) y `pnpm build`
+(el zip sale de `dist/`). Pasos, parámetros SSM, kill-switch, alarmas y
+riesgos: [`docs/runbook.md`](docs/runbook.md) (sección "Deploy"; el usuario
+de bootstrap, en "Bootstrap IAM (I2)").
+
+```
+pnpm build
+cd terraform
+cp terraform.tfvars.example terraform.tfvars   # valores reales; gitignoreado
+terraform init && terraform plan               # revisar
+terraform apply                                # solo a mano, con aprobación humana
+```
+
+El `apply` nunca corre en CI. El código de las Lambdas se despliega con el
+workflow manual `Deploy` (OIDC, solo desde `main`). El CI valida
+`terraform fmt`/`validate` sin credenciales.
+
+Variables sin default (van en `terraform.tfvars`): `order_recipient_email`,
+`order_sender_email`, `budget_notification_email`, `allowed_origins`,
+`catalog_products_url`, `github_repo`, `github_oidc_provider_arn`. Opcional:
+`alerts_email` (default: `budget_notification_email`).
+
+### Coordinación de valores
+
+Sin estado remoto compartido entre repos: cada valor se pasa a mano.
+Placeholders; los reales viven en `terraform output` local y en SSM.
+
+| Valor | Sale de | Va a | Quién |
+|---|---|---|---|
+| `orders_api_url` (output; termina en `/`) | `terraform output` de este repo | Env var `NEXT_PUBLIC_ORDERS_API_URL` de `renovarte-catalogo` en Vercel, solo Production | CTO/CEO al aplicar |
+| Dominio de producción del catálogo (`<CATALOG_ORIGIN>`) | `renovarte-catalogo` / Vercel | `allowed_origins` y `catalog_products_url` en `terraform.tfvars` | CTO/CEO |
+| `github_oidc_provider_arn` (`arn:aws:iam::<ACCOUNT_ID>:oidc-provider/...`) | Bootstrap manual de la cuenta | `terraform.tfvars` | CTO/CEO |
+| `github_deploy_role_arn` (output) | `terraform output` | Variable del repo `AWS_DEPLOY_ROLE_ARN` (no es secreto) | CTO/CEO tras el primer `apply` |
+| URL del webhook de Discord (`<WEBHOOK_URL>`) | Discord | Parámetro SSM, **nunca** tfvars, repo ni chat | CTO/CEO |
+
 ## Auditoría de fugas
 
 `pnpm check:leak` (parte de `pnpm gate`) revisa los archivos versionables:
