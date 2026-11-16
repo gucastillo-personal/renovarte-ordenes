@@ -1,0 +1,29 @@
+# Copiar a terraform.tfvars (gitignoreado) y completar con valores reales.
+# `terraform apply` requiere aprobación humana explícita. Este repo es
+# público: nunca commitear emails, IDs de cuenta ni ARNs reales.
+
+aws_region = "us-east-1"
+
+order_recipient_email     = "ordenes@example.com"
+order_sender_email        = "no-reply@example.com"
+budget_notification_email = "alertas@example.com"
+# alerts_email            = "alertas-operativas@example.com" # opcional; default = budget_notification_email
+
+allowed_origins      = ["https://catalogo.example.com"]
+catalog_products_url = "https://catalogo.example.com/products.json"
+
+# null = sin reserva (cuenta con cuota de concurrencia 10, I-D4 caso b).
+orders_http_reserved_concurrency = 5
+
+github_repo              = "OWNER/renovarte-ordenes"
+github_oidc_provider_arn = "arn:aws:iam::<ACCOUNT_ID>:oidc-provider/token.actions.githubusercontent.com"
+
+# Subir tras rotar un secreto en SSM (put-parameter --overwrite).
+config_revision = 1
+
+# Opción B de SES (dominio propio); vacío = opción A (identidad de email).
+sender_domain = ""
+
+# TEMPORAL hasta I7: ARNs de los roles de ejecución.
+# orders_http_role_arn  = "arn:aws:iam::<ACCOUNT_ID>:role/renovarte-ordenes-orders-http"
+# budget_guard_role_arn = "arn:aws:iam::<ACCOUNT_ID>:role/renovarte-ordenes-budget-guard"
