@@ -26,11 +26,4 @@ locals {
   # el reset).
   orders_http_reserved_concurrency_effective = var.orders_http_reserved_concurrency == null ? -1 : var.orders_http_reserved_concurrency
   orders_http_reserved_concurrency_env       = var.orders_http_reserved_concurrency == null ? "" : tostring(var.orders_http_reserved_concurrency)
-
-  # --- PENDIENTE I7 (iam.tf) ---------------------------------------------
-  # Los roles de ejecución los crea I7. Hasta entonces se reciben por
-  # variable. Al llegar I7: reemplazar por aws_iam_role.orders_http.arn /
-  # aws_iam_role.budget_guard.arn y borrar las dos variables.
-  orders_http_role_arn  = var.orders_http_role_arn
-  budget_guard_role_arn = var.budget_guard_role_arn
 }

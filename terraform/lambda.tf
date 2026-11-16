@@ -10,7 +10,7 @@ data "archive_file" "ordenes_dist" {
 
 resource "aws_lambda_function" "orders_http" {
   function_name    = local.orders_http_name
-  role             = local.orders_http_role_arn # PENDIENTE I7: aws_iam_role.orders_http.arn
+  role             = aws_iam_role.orders_http.arn
   handler          = "handlers/index.handler"
   runtime          = "nodejs22.x"
   architectures    = ["arm64"]
@@ -63,7 +63,7 @@ resource "aws_lambda_function" "orders_http" {
 
 resource "aws_lambda_function" "budget_guard" {
   function_name    = local.budget_guard_name
-  role             = local.budget_guard_role_arn # PENDIENTE I7: aws_iam_role.budget_guard.arn
+  role             = aws_iam_role.budget_guard.arn
   handler          = "handlers/budget-guard.handler"
   runtime          = "nodejs22.x"
   architectures    = ["arm64"]

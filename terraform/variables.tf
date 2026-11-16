@@ -142,18 +142,3 @@ variable "costo_mail_usd" {
   type        = number
   default     = 0.0002
 }
-
-# --- PENDIENTE I7 -----------------------------------------------------------
-# TEMPORAL: I7 (iam.tf) crea los roles de ejecución; hasta entonces se
-# reciben por variable. Se borran cuando I7 reemplace locals.*_role_arn.
-variable "orders_http_role_arn" {
-  description = "TEMPORAL (I7): ARN del rol de ejecución de orders-http."
-  type        = string
-  default     = null
-}
-
-variable "budget_guard_role_arn" {
-  description = "TEMPORAL (I7): ARN del rol de ejecución de budget-guard."
-  type        = string
-  default     = null
-}
