@@ -11,6 +11,8 @@ terraform/.terraform/
 terraform/*.tfstate
 terraform/*.tfstate.*
 terraform/terraform.tfvars
+terraform/*.tfvars
+!terraform/*.tfvars.example
 terraform/build/
 terraform/crash.log
 # Policy IAM de bootstrap del usuario que aplica Terraform (la carga el CTO/CEO en AWS; I2)
