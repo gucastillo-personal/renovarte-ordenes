@@ -14,6 +14,34 @@ Manual del CTO/CEO. Estado: **pendiente**.
 - [ ] Canal de prueba para B19.
 - [ ] Firmada por el CTO/CEO (fecha): pendiente.
 
+## Bootstrap IAM (I2) — lo hace el CTO/CEO
+
+El usuario que corre `terraform apply` se crea a mano, una sola vez. La
+policy vive en `terraform/iam-bootstrap-policy.json` (gitignoreada) y usa el
+placeholder `<ACCOUNT_ID>`: reemplazarlo por el ID de la cuenta solo en la
+copia local, nunca en un archivo versionado. Si llega la opción B del
+remitente (identidad de dominio), sumar a mano el ARN de esa identidad al
+statement `SesExactIdentity`.
+
+```bash
+# 1. Policy y usuario (con un perfil admin, a mano)
+aws iam create-policy --policy-name renovarte-ordenes-terraform-bootstrap \
+  --policy-document file://terraform/iam-bootstrap-policy.json
+aws iam create-user --user-name renovarte-ordenes-terraform
+aws iam attach-user-policy --user-name renovarte-ordenes-terraform \
+  --policy-arn arn:aws:iam::<ACCOUNT_ID>:policy/renovarte-ordenes-terraform-bootstrap
+aws iam create-access-key --user-name renovarte-ordenes-terraform
+
+# 2. Perfil local (pegar la clave a mano; no va a chat ni a git)
+aws configure --profile renovarte-ordenes-terraform
+export AWS_PROFILE=renovarte-ordenes-terraform
+aws sts get-caller-identity
+```
+
+El provider OIDC de GitHub es un singleton de la cuenta: **no** lo gestiona
+este repo ni esta policy (I-D10). Si no existe, se crea a mano
+(`aud = sts.amazonaws.com`) y su ARN llega como `github_oidc_provider_arn`.
+
 ## Deploy
 
 Pendiente (lo completa la infra, `plan.md ## Infra`).
