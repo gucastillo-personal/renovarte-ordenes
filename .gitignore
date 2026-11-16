@@ -13,6 +13,8 @@ terraform/*.tfstate.*
 terraform/terraform.tfvars
 terraform/build/
 terraform/crash.log
+# Policy IAM de bootstrap del usuario que aplica Terraform (la carga el CTO/CEO en AWS; I2)
+terraform/iam-bootstrap-policy.json
 
 # OS
 .DS_Store
