@@ -23,7 +23,3 @@ config_revision = 1
 
 # Opción B de SES (dominio propio); vacío = opción A (identidad de email).
 sender_domain = ""
-
-# TEMPORAL hasta I7: ARNs de los roles de ejecución.
-# orders_http_role_arn  = "arn:aws:iam::<ACCOUNT_ID>:role/renovarte-ordenes-orders-http"
-# budget_guard_role_arn = "arn:aws:iam::<ACCOUNT_ID>:role/renovarte-ordenes-budget-guard"
