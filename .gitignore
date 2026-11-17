@@ -20,3 +20,7 @@ terraform/iam-bootstrap-policy.json
 
 # OS
 .DS_Store
+
+# Plan guardado de Terraform (puede traer emails y ARNs; repo público)
+terraform/tfplan
+terraform/*.tfplan
